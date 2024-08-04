@@ -1,0 +1,58 @@
+version: '3'
+services:
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql_volume:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  sidekiq:
+    build:
+      context: ..
+      dockerfile: utilities/Dockerfile.rails
+    command: bundle exec sidekiq -e "development" -C /app/config/sidekiq.yml
+    volumes:
+      - ../bedopedia:/app
+    environment:
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+      - REDIS_HOST=${REDIS_HOST}
+      - SIDEKIQ_WEB_PASSWORD=${SIDEKIQ_WEB_PASSWORD}
+    entrypoint: ["/usr/bin/rails_startup.sh"]
+    depends_on:
+      - db
+      - redis
+
+  rails:
+    build:
+      context: ..
+      dockerfile: utilities/Dockerfile.rails
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+      - REDIS_HOST=${REDIS_HOST}
+    volumes:
+      - ../bedopedia:/app
+    depends_on:
+      - db
+      - redis
+      - sidekiq
+    entrypoint: ["/usr/bin/rails_startup.sh"]
+    command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
