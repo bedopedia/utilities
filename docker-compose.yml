@@ -31,6 +31,8 @@ services:
       - DB_NAME=${DB_NAME}
       - REDIS_HOST=${REDIS_HOST}
       - SIDEKIQ_WEB_PASSWORD=${SIDEKIQ_WEB_PASSWORD}
+      - AFS_BASE_URL=${AFS_BASE_URL}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     entrypoint: ["/usr/bin/rails_startup.sh"]
     depends_on:
       - db
@@ -48,6 +50,9 @@ services:
       - DB_HOST=db
       - DB_NAME=${DB_NAME}
       - REDIS_HOST=${REDIS_HOST}
+      - SIDEKIQ_WEB_PASSWORD=${SIDEKIQ_WEB_PASSWORD}
+      - AFS_BASE_URL=${AFS_BASE_URL}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     volumes:
       - ../bedopedia:/app
     depends_on:
