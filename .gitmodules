@@ -1,0 +1,8 @@
+[submodule "legacy_app"]
+	path = legacy_app
+	url = https://github.com/bedopedia/bedopedia
+	branch = azure-release
+[submodule "next_app"]
+	path = next_app
+	url = https://github.com/bedopedia/skolera_be
+	branch = local-dockerization

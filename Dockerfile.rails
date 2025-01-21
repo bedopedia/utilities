@@ -8,6 +8,10 @@ RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list \
     && apt-get install -y nodejs netcat \
     && rm -rf /var/lib/apt/lists/*
 
+
+RUN mkdir -p vendor/cache
+COPY ../wkhtmltopdf-binary-0.12.6.8.gem vendor/cache/
+
 # Set the working directory
 WORKDIR /app
 
