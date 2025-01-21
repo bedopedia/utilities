@@ -1,37 +1,49 @@
-version: '3'
-networks:
-  default:
-    driver: bridge
 services:
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile.mysql
+    image: mysql:8.4
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
     ports:
       - "3306:3306"
     volumes:
-      - ./mysql_volume:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 5s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 5s
       retries: 10
 
   redis:
-    image: redis:latest
+    image: redis:7.0
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 5s
+      retries: 10
+    command: redis-server --appendonly yes
 
   sidekiq:
     build:
-      context: ..
-      dockerfile: utilities/Dockerfile.rails
-    command: bundle exec sidekiq -e "development" -C /app/config/sidekiq.yml
+      context: .
+      dockerfile: Dockerfile.rails
+    command: bundle exec sidekiq
     volumes:
-      - ../bedopedia:/app
+      - ./legacy_app:/app
+      - bundle_cache:/usr/local/bundle
+    networks:
+      - app_network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -41,15 +53,38 @@ services:
       - SIDEKIQ_WEB_PASSWORD=${SIDEKIQ_WEB_PASSWORD}
       - AFS_BASE_URL=${AFS_BASE_URL}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-    entrypoint: ["/usr/bin/rails_startup.sh"]
+
+  legacy_rails:
+    build:
+      context: .
+      dockerfile: Dockerfile.rails
+    ports:
+      - "3001:3000"
+    environment:
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+      - REDIS_HOST=${REDIS_HOST}
+      - SIDEKIQ_WEB_PASSWORD=${SIDEKIQ_WEB_PASSWORD}
+      - AFS_BASE_URL=${AFS_BASE_URL}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    volumes:
+      - ./legacy_app:/app
+      - bundle_cache:/usr/local/bundle
+      - ../wkhtmltopdf-binary-0.12.6.8.gem:/app/vendor/cache/wkhtmltopdf-binary-0.12.6.8.gem
+    networks:
+      - app_network
     depends_on:
       - db
       - redis
+      - sidekiq
 
-  rails:
+
+  next_rails:
     build:
-      context: ..
-      dockerfile: utilities/Dockerfile.rails
+      context: .
+      dockerfile: Dockerfile.rails
     ports:
       - "3000:3000"
     environment:
@@ -62,10 +97,20 @@ services:
       - AFS_BASE_URL=${AFS_BASE_URL}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     volumes:
-      - ../bedopedia:/app
+      - ./next_app:/app
+      - bundle_cache:/usr/local/bundle
+    networks:
+      - app_network
     depends_on:
       - db
       - redis
       - sidekiq
-    entrypoint: ["/usr/bin/rails_startup.sh"]
-    command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  bundle_cache:

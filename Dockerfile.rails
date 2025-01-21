@@ -8,29 +8,18 @@ RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list \
     && apt-get install -y nodejs netcat \
     && rm -rf /var/lib/apt/lists/*
 
-
-RUN mkdir -p vendor/cache
-COPY ../wkhtmltopdf-binary-0.12.6.8.gem vendor/cache/
-
 # Set the working directory
 WORKDIR /app
 
-# Copy Gemfile and Gemfile.lock from the bedopedia directory
-COPY bedopedia/Gemfile bedopedia/Gemfile.lock ./
-
-# Create vendor/gems directory
-RUN mkdir -p vendor/gems
-
-# Install gems
-RUN bundle config set --local path 'vendor/bundle'
-RUN bundle install --verbose
+# Create vendor directories
+RUN mkdir -p vendor/cache vendor/gems
 
 # Copy the startup script
-COPY utilities/rails_startup.sh /usr/bin/
+COPY rails_startup.sh /usr/bin/
 RUN chmod +x /usr/bin/rails_startup.sh
 
-# Set the entrypoint
-ENTRYPOINT ["rails_startup.sh"]
+# Install bundler
+RUN gem install bundler -v "~> 1.0"
 
-# Start Rails
+# Default command
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
