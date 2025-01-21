@@ -1,3 +1,6 @@
 mysql_volume/
 .env
 mydump.sql
+mysql_data
+redis_data
+bundle_cache

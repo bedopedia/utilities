@@ -80,11 +80,10 @@ services:
       - redis
       - sidekiq
 
-
   next_rails:
     build:
-      context: .
-      dockerfile: Dockerfile.rails
+      context: ./next_app # Point to the next_app submodule directory
+      dockerfile: Dockerfile # The Dockerfile is inside next_app
     ports:
       - "3000:3000"
     environment:
@@ -97,7 +96,7 @@ services:
       - AFS_BASE_URL=${AFS_BASE_URL}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     volumes:
-      - ./next_app:/app
+      - ./next_app:/app # Mount the next_app submodule
       - bundle_cache:/usr/local/bundle
     networks:
       - app_network
@@ -112,5 +111,20 @@ networks:
 
 volumes:
   mysql_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/mysql_data
+      o: bind
   redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/redis_data
+      o: bind
   bundle_cache:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/bundle_cache
+      o: bind

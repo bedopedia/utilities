@@ -5,6 +5,9 @@ ENV MYSQL_DATABASE=skolera
 
 COPY ./mydump.sql /docker-entrypoint-initdb.d/
 
+RUN mkdir -p /var/run/mysqld && \
+    chown mysql:mysql /var/run/mysqld
+
 EXPOSE 3306
 
 CMD ["mysqld", "--default-authentication-plugin=mysql_native_password"]
