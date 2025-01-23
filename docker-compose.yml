@@ -45,7 +45,7 @@ services:
     command: bundle exec sidekiq
     volumes:
       - ./legacy_app:/app
-      - bundle_cache:/usr/local/bundle
+      - legacy_bundle_cache:/usr/local/bundle  # Changed to use legacy bundle cache
     networks:
       - app_network
     depends_on:
@@ -80,7 +80,7 @@ services:
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     volumes:
       - ./legacy_app:/app
-      - bundle_cache:/usr/local/bundle
+      - legacy_bundle_cache:/usr/local/bundle  # Changed to use legacy bundle cache
       - ../wkhtmltopdf-binary-0.12.6.8.gem:/app/vendor/cache/wkhtmltopdf-binary-0.12.6.8.gem
     networks:
       - app_network
@@ -106,7 +106,7 @@ services:
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     volumes:
       - ./next_app:/app
-      - bundle_cache:/usr/local/bundle
+      - next_bundle_cache:/usr/local/bundle  # Changed to use next bundle cache
     networks:
       - app_network
     depends_on:
@@ -127,13 +127,15 @@ volumes:
       o: bind
   redis_data:
     driver: local
-    driver_opts:
-      type: none
-      device: ${PWD}/redis_data
-      o: bind
-  bundle_cache:
+  legacy_bundle_cache:  # New volume for legacy app
     driver: local
     driver_opts:
       type: none
-      device: ${PWD}/bundle_cache
+      device: ${PWD}/legacy_bundle_cache
+      o: bind
+  next_bundle_cache:  # New volume for next app
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/next_bundle_cache
       o: bind

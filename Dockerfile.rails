@@ -13,6 +13,7 @@ RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list \
     libxml2-dev \
     libxslt1-dev \
     imagemagick \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -26,21 +27,39 @@ RUN mkdir -p vendor/cache vendor/gems vendor/bundle \
 RUN gem uninstall bundler --all \
     && gem install bundler -v "1.17.3"
 
+# First install rake globally (needed for bundle install)
+RUN gem install rake -v "13.0.1"
+
 # Copy Gemfile and Gemfile.lock first for better caching
 COPY legacy_app/Gemfile legacy_app/Gemfile.lock ./
+
+# Setup git repos first
+RUN mkdir -p vendor/bundle/ruby/2.3.0/bundler/gems \
+    && cd vendor/bundle/ruby/2.3.0/bundler/gems \
+    && git clone --no-checkout https://github.com/bedopedia/paper_trail.git paper_trail-ebc8357711c8 \
+    && cd paper_trail-ebc8357711c8 \
+    && git checkout ebc8357711c8
 
 # Copy the vendor directory containing any local gems
 COPY legacy_app/vendor/cache ./vendor/cache
 COPY legacy_app/vendor/gems ./vendor/gems
 
-# Configure bundler and install gems
+# Remove corrupted gem
+RUN rm -f vendor/cache/wkhtmltopdf-binary-0.12.6.8.gem
+
+# Bundle install in two steps
+# First, without deployment mode
 RUN bundle config --local build.nokogiri --use-system-libraries \
-    && bundle config --local jobs 4 \
-    && bundle install --no-cache --verbose \
+    && bundle install --no-deployment --verbose
+
+# Then, with deployment mode
+RUN bundle config --local deployment true \
+    && bundle config --local path vendor/bundle \
+    && bundle install --local --verbose \
     && bundle clean --force \
-    && rm -rf /usr/local/bundle/cache/*.gem \
-    && find /usr/local/bundle/gems/ -name "*.c" -delete \
-    && find /usr/local/bundle/gems/ -name "*.o" -delete
+    && rm -rf vendor/bundle/ruby/*/cache/*.gem \
+    && find vendor/bundle/ruby/*/gems/ -name "*.c" -delete \
+    && find vendor/bundle/ruby/*/gems/ -name "*.o" -delete
 
 # Copy the startup script
 COPY rails_startup.sh /usr/bin/
