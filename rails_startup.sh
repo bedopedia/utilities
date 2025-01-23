@@ -9,8 +9,14 @@ do
   sleep 5
 done
 
-# Run database migrations
-bundle exec rake db:create db:migrate
+# Print gem environment for debugging
+echo "Gem Environment:"
+gem env
+echo "Installed Gems:"
+gem list
+
+# Run database migrations with explicit bundle exec
+RAILS_ENV=development bundle exec rake db:create db:migrate
 
 # Then exec the container's main process (what's set as CMD in the Dockerfile)
 exec "$@"

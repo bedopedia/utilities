@@ -5,21 +5,49 @@ RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list \
     && sed -i 's|security.debian.org|archive.debian.org/|g' /etc/apt/sources.list \
     && sed -i '/stretch-updates/d' /etc/apt/sources.list \
     && apt-get update -qq \
-    && apt-get install -y nodejs netcat \
+    && apt-get install -y \
+    nodejs \
+    netcat \
+    build-essential \
+    libpq-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    imagemagick \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
 
-# Create vendor directories
-RUN mkdir -p vendor/cache vendor/gems
+# Create vendor directories and ensure proper permissions
+RUN mkdir -p vendor/cache vendor/gems vendor/bundle \
+    && chmod -R 777 vendor
+
+# Install specific version of bundler
+RUN gem uninstall bundler --all \
+    && gem install bundler -v "1.17.3"
+
+# Copy Gemfile and Gemfile.lock first for better caching
+COPY legacy_app/Gemfile legacy_app/Gemfile.lock ./
+
+# Copy the vendor directory containing any local gems
+COPY legacy_app/vendor/cache ./vendor/cache
+COPY legacy_app/vendor/gems ./vendor/gems
+
+# Configure bundler and install gems
+RUN bundle config --local build.nokogiri --use-system-libraries \
+    && bundle config --local jobs 4 \
+    && bundle install --no-cache --verbose \
+    && bundle clean --force \
+    && rm -rf /usr/local/bundle/cache/*.gem \
+    && find /usr/local/bundle/gems/ -name "*.c" -delete \
+    && find /usr/local/bundle/gems/ -name "*.o" -delete
 
 # Copy the startup script
 COPY rails_startup.sh /usr/bin/
 RUN chmod +x /usr/bin/rails_startup.sh
 
-# Install bundler
-RUN gem install bundler -v "~> 1.0"
+# Set the entrypoint
+ENTRYPOINT ["rails_startup.sh"]
 
 # Default command
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
