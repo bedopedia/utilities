@@ -19,23 +19,23 @@ RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list \
 # Set the working directory
 WORKDIR /app
 
-# Create vendor directories and ensure proper permissions
-RUN mkdir -p vendor/cache vendor/gems vendor/bundle \
-    && chmod -R 777 vendor
+# Create necessary directories with proper permissions
+RUN mkdir -p vendor/cache vendor/gems /usr/local/bundle tmp \
+    && chmod -R 777 vendor /usr/local/bundle tmp
 
 # Install specific version of bundler
 RUN gem uninstall bundler --all \
     && gem install bundler -v "1.17.3"
 
-# First install rake globally (needed for bundle install)
-RUN gem install rake -v "13.0.1"
+# Copy Gemfile only (not Gemfile.lock)
+COPY legacy_app/Gemfile ./
 
-# Copy Gemfile and Gemfile.lock first for better caching
-COPY legacy_app/Gemfile legacy_app/Gemfile.lock ./
+RUN mkdir -p /app/vendor/gems/wkhtmltopdf-binary
+COPY ./wkhtmltopdf_binary_gem /app/vendor/gems/wkhtmltopdf-binary/
 
 # Setup git repos first
-RUN mkdir -p vendor/bundle/ruby/2.3.0/bundler/gems \
-    && cd vendor/bundle/ruby/2.3.0/bundler/gems \
+RUN mkdir -p /usr/local/bundle/ruby/2.3.0/bundler/gems \
+    && cd /usr/local/bundle/ruby/2.3.0/bundler/gems \
     && git clone --no-checkout https://github.com/bedopedia/paper_trail.git paper_trail-ebc8357711c8 \
     && cd paper_trail-ebc8357711c8 \
     && git checkout ebc8357711c8
@@ -44,22 +44,21 @@ RUN mkdir -p vendor/bundle/ruby/2.3.0/bundler/gems \
 COPY legacy_app/vendor/cache ./vendor/cache
 COPY legacy_app/vendor/gems ./vendor/gems
 
-# Remove corrupted gem
-RUN rm -f vendor/cache/wkhtmltopdf-binary-0.12.6.8.gem
+RUN bundle config set --local path '/usr/local/bundle' \
+    && bundle config set --local build.nokogiri --use-system-libraries \
+    && bundle config set --local timeout 300 \
+    && bundle config set --local retry 5 \
+    && bundle config set jobs 2
 
-# Bundle install in two steps
-# First, without deployment mode
-RUN bundle config --local build.nokogiri --use-system-libraries \
-    && bundle install --no-deployment --verbose
+ENV BUNDLE_RETRY=5 \
+    BUNDLE_JOBS=2 \
+    BUNDLE_TIMEOUT=60
 
-# Then, with deployment mode
-RUN bundle config --local deployment true \
-    && bundle config --local path vendor/bundle \
-    && bundle install --local --verbose \
-    && bundle clean --force \
-    && rm -rf vendor/bundle/ruby/*/cache/*.gem \
-    && find vendor/bundle/ruby/*/gems/ -name "*.c" -delete \
-    && find vendor/bundle/ruby/*/gems/ -name "*.o" -delete
+RUN git config --global http.lowSpeedLimit 1000 \
+    && git config --global http.lowSpeedTime 300
+
+# Install gems
+RUN bundle install
 
 # Copy the startup script
 COPY rails_startup.sh /usr/bin/
