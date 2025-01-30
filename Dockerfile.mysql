@@ -1,4 +1,3 @@
-# Dockerfile.mysql
 FROM mysql:8.0
 
 ARG DB_PASSWORD
@@ -19,4 +18,5 @@ EXPOSE 3306
 
 CMD ["mysqld", \
      "--default-authentication-plugin=mysql_native_password", \
-     "--bind-address=0.0.0.0"]
+     "--bind-address=0.0.0.0", \
+     "--skip-name-resolve"]

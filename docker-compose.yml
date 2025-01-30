@@ -51,7 +51,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./legacy_app:/app    # Add this volume mount
+      - ./legacy_app:/app
     environment:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -77,14 +77,14 @@ services:
       - SIDEKIQ_WEB_PASSWORD=${SIDEKIQ_WEB_PASSWORD}
       - AFS_BASE_URL=${AFS_BASE_URL}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-    volumes:
-      - ../wkhtmltopdf-binary-0.12.6.8.gem:/app/vendor/cache/wkhtmltopdf-binary-0.12.6.8.gem:ro
     networks:
       - app_network
     depends_on:
       - db
       - redis
       - sidekiq
+    volumes:
+      - ./legacy_app:/app
 
   next_rails:
     build:

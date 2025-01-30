@@ -1,71 +1,28 @@
 FROM ruby:2.3.8
 
-# Update package sources and install dependencies
 RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list \
     && sed -i 's|security.debian.org|archive.debian.org/|g' /etc/apt/sources.list \
     && sed -i '/stretch-updates/d' /etc/apt/sources.list \
     && apt-get update -qq \
     && apt-get install -y \
-    nodejs \
-    netcat \
-    build-essential \
-    libpq-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    imagemagick \
-    git \
+    nodejs netcat build-essential libpq-dev libxml2-dev libxslt1-dev imagemagick git \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
 WORKDIR /app
 
-# Create necessary directories with proper permissions
-RUN mkdir -p vendor/cache vendor/gems /usr/local/bundle tmp \
-    && chmod -R 777 vendor /usr/local/bundle tmp
+COPY legacy_app/Gemfile legacy_app/Gemfile.lock ./
+COPY legacy_app/vendor ./vendor
+COPY wkhtmltopdf-binary-0.12.6.8.gem /app/
 
-# Install specific version of bundler
-RUN gem uninstall bundler --all \
-    && gem install bundler -v "1.17.3"
-
-# Copy Gemfile only (not Gemfile.lock)
-COPY legacy_app/Gemfile ./
-
-RUN mkdir -p /app/vendor/gems/wkhtmltopdf-binary
-COPY ./wkhtmltopdf_binary_gem /app/vendor/gems/wkhtmltopdf-binary/
-
-# Setup git repos first
-RUN mkdir -p /usr/local/bundle/ruby/2.3.0/bundler/gems \
-    && cd /usr/local/bundle/ruby/2.3.0/bundler/gems \
-    && git clone --no-checkout https://github.com/bedopedia/paper_trail.git paper_trail-ebc8357711c8 \
-    && cd paper_trail-ebc8357711c8 \
-    && git checkout ebc8357711c8
-
-# Copy the vendor directory containing any local gems
-COPY legacy_app/vendor/cache ./vendor/cache
-COPY legacy_app/vendor/gems ./vendor/gems
-
-RUN bundle config set --local path '/usr/local/bundle' \
-    && bundle config set --local build.nokogiri --use-system-libraries \
-    && bundle config set --local timeout 300 \
-    && bundle config set --local retry 5 \
-    && bundle config set jobs 2
-
-ENV BUNDLE_RETRY=5 \
-    BUNDLE_JOBS=2 \
-    BUNDLE_TIMEOUT=60
-
-RUN git config --global http.lowSpeedLimit 1000 \
-    && git config --global http.lowSpeedTime 300
+# Configure bundler
+RUN bundle config --global frozen false
 
 # Install gems
-RUN bundle install
+RUN gem install /app/wkhtmltopdf-binary-0.12.6.8.gem && \
+    bundle install --jobs=4 --retry=3
 
-# Copy the startup script
 COPY rails_startup.sh /usr/bin/
 RUN chmod +x /usr/bin/rails_startup.sh
 
-# Set the entrypoint
 ENTRYPOINT ["rails_startup.sh"]
-
-# Default command
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
