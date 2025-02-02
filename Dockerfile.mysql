@@ -1,15 +1,22 @@
 FROM mysql:8.0
 
-ENV MYSQL_ROOT_PASSWORD=root
-ENV MYSQL_DATABASE=skolera
+ARG DB_PASSWORD
+ARG DB_NAME
+ARG MYSQL_ROOT_HOST
+
+ENV MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-skolera}
+ENV MYSQL_DATABASE=${DB_NAME:-skolera}
+ENV MYSQL_ROOT_HOST=${MYSQL_ROOT_HOST:-"%"}
 
 COPY ./mydump.sql /docker-entrypoint-initdb.d/
 
+RUN mkdir -p /var/run/mysqld && \
+    chown -R mysql:mysql /var/run/mysqld /var/lib/mysql && \
+    chmod 777 /var/run/mysqld
+
 EXPOSE 3306
 
-CMD ["mysqld", "--default-authentication-plugin=mysql_native_password"]
-
-# docker build -t my-mysql-image:latest .
-# docker run -d --name my-mysql-container -p 3306:3306 -v ./mysql_volume:/var/lib/mysql my-mysql-image
-
-# docker run --rm -it -p 3000:3000 -p 6379:6379 -e DB_USERNAME=root -e DB_PASSWORD=root -e DB_HOST=host.docker.internal -e DB_NAME=skolera -e REDIS_HOST=localhost --name rails-app-local-container rails-app-local bash
+CMD ["mysqld", \
+     "--default-authentication-plugin=mysql_native_password", \
+     "--bind-address=0.0.0.0", \
+     "--skip-name-resolve"]
