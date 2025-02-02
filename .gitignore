@@ -1,8 +1,5 @@
 mysql_volume/
 .env
 mydump.sql
-mysql_data
 redis_data
-legacy_bundle_cache
-next_bundle_cache
 wkhtmltopdf-binary-0.12.6.8.gem
