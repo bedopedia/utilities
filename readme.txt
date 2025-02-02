@@ -4,7 +4,7 @@
 
 Install the wkhtmltopdf-binary gem manually:
 
-```bash
+```
 gem fetch wkhtmltopdf-binary -v 0.12.6.8
 ```
 
@@ -12,7 +12,7 @@ Place the downloaded gem in the base folder of the utilities repository.
 
 Initialize git submodules:
 
-```bash
+```
 git submodule update --init --recursive
 ```
 
@@ -22,7 +22,7 @@ git submodule update --init --recursive
 
 Launch all services:
 
-```bash
+```
 docker-compose up
 ```
 
@@ -30,7 +30,7 @@ docker-compose up
 
 Run specific services with their dependencies:
 
-```bash
+```
 # Database only
 docker-compose up db
 
@@ -48,7 +48,7 @@ docker-compose up db redis sidekiq next_rails
 
 ### Container Access
 
-```bash
+```
 # Access Legacy Rails console
 docker-compose exec legacy_rails rails c
 
@@ -64,7 +64,7 @@ docker-compose exec redis redis-cli
 
 ### Logs
 
-```bash
+```
 # View logs for specific service
 docker-compose logs -f [service_name]
 
@@ -74,7 +74,7 @@ docker-compose logs -f
 
 ### Service Management
 
-```bash
+```
 # Restart specific service
 docker-compose restart [service_name]
 
