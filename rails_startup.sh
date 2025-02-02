@@ -9,12 +9,6 @@ do
   sleep 5
 done
 
-# Print gem environment for debugging
-echo "Gem Environment:"
-gem env
-echo "Installed Gems:"
-gem list
-
 # Run database migrations with explicit bundle exec
 RAILS_ENV=development bundle exec rake db:create db:migrate
 
