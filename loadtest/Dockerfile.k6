@@ -1,0 +1,10 @@
+# Dockerfile.k6
+FROM grafana/k6:latest
+
+# Copy test scripts
+COPY ./load-tests /scripts
+
+WORKDIR /scripts
+
+# Command will be overridden by docker-compose
+CMD ["run", "health_check.js"]
