@@ -52,6 +52,31 @@ services:
     depends_on:
       - influxdb
 
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    networks:
+      - loadtest-network
+      - app_network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "${CADVISOR_PORT}:8080"
+    networks:
+      - loadtest-network
+      - app_network
+
 networks:
   loadtest-network:
     driver: bridge
@@ -62,3 +87,4 @@ networks:
 volumes:
   influxdb-data:
   grafana-data:
+  prometheus_data:

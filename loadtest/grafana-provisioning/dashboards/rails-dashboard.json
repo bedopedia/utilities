@@ -1,0 +1,26 @@
+# grafana-provisioning/dashboards/rails-dashboard.json
+{
+  "annotations": {...},
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "panels": [
+    {
+      "title": "HTTP Request Rate",
+      ...
+    },
+    {
+      "title": "Response Time",
+      ...
+    },
+    {
+      "title": "Error Rate",
+      ...
+    }
+  ],
+  "title": "Ruby on Rails Application",
+  "uid": "rails-dashboard",
+  "version": 1
+}
