@@ -1,24 +1,89 @@
 # Application Setup Guide
 
 ## Prerequisites
-1. Install the wkhtmltopdf-binary gem manually:
-```bash
-gem fetch wkhtmltopdf-binary -v 0.12.6.8
-```
-Place the downloaded gem in the base folder of the utilities repository.
 
-2. Initialize git submodules:
-```bash
-git submodule update --init --recursive
-```
+1. Initialize git submodules:
+  ```bash
+  git submodule update --init --recursive
+  ```
 
-3. Download database dump file (`mydump.sql`) and place it in the repository root directory.
+2. Download database dump file (`mydump.sql`) and place it in the repository root directory.
+
+3. Create configuration files:
+   - Create a `.env` file in the `utilities/` directory with the following content:
+     ```
+     # Database Configuration
+     DB_USERNAME=skolera
+     DB_PASSWORD=skolera
+     DB_NAME=skolera
+
+     # Redis Configuration
+     REDIS_HOST=redis
+     REDIS_PASSWORD=skolera
+
+     # Sidekiq Configuration
+     SIDEKIQ_WEB_PASSWORD=skolera
+
+     # Application Specific
+     AFS_BASE_URL=
+     ENCRYPTION_KEY=skolera
+     ```
+   - Create `utilities/legacy_app/config/database.yml` with the following content:
+     ```yaml
+     default: &default
+       adapter: mysql2
+       encoding: utf8
+       pool: 5
+       username: <%= ENV['DB_USERNAME'] || 'root' %>
+       password: <%= ENV['DB_PASSWORD'] %>
+       host: <%= ENV['DB_HOST'] || 'db' %>
+       port: <%= ENV['DB_PORT'] || 3306 %>
+       socket: <%= ENV['DB_SOCKET'] %>
+
+     development:
+       <<: *default
+       database: <%= ENV['DB_NAME'] %>
+
+     test:
+       <<: *default
+       database: <%= ENV['DB_NAME'] %>_test
+
+     staging:
+       <<: *default
+       database: <%= ENV['DB_NAME'] %>
+
+     production:
+       <<: *default
+       database: <%= ENV['DB_NAME'] %>
+       pool: <%= ENV['DB_POOL'] || 5 %>
+     ```
+   - Download the SQL dump (eis 20-04-2024) and place it at `utilities/mydump.sql`
+
+4. Modify configuration files:
+   - Edit `utilities/legacy_app/config/initializers/airbrake.rb` and wrap the Airbrake.configure block with:
+     ```ruby
+     if ENV['AIRBRAKE_PROJECT_ID'].present? && ENV['AIRBRAKE_PROJECT_KEY'].present?
+       Airbrake.configure do |config|
+         # existing configuration
+       end
+     end
+     ```
+   - Update `utilities/legacy_app/config/redis.yml` to use environment variables:
+     ```yaml
+     host: <%= ENV['REDIS_HOST'] %>
+     password: <%= ENV['REDIS_PASSWORD'] %>
+     ```
 
 ## Running the Application
 ### Full Stack Setup
 Launch all services:
 ```bash
 docker-compose up
+```
+
+To run in daemon mode (background):
+```bash
+docker-compose up -d
 ```
 ### Individual Services
 Run specific services with their dependencies:
