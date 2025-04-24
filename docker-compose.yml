@@ -40,8 +40,7 @@ services:
 
   sidekiq:
     build:
-      context: .
-      dockerfile: Dockerfile.rails
+      context: ./legacy_app
     command: bundle exec sidekiq
     networks:
       - app_network
@@ -61,11 +60,13 @@ services:
       - SIDEKIQ_WEB_PASSWORD=${SIDEKIQ_WEB_PASSWORD}
       - AFS_BASE_URL=${AFS_BASE_URL}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - RAILS_ENV=development
+      - PASSED_RAILS_ENV=development
+      - DB_PORT=3306
 
   legacy_rails:
     build:
-      context: .
-      dockerfile: Dockerfile.rails
+      context: ./legacy_app
     ports:
       - "3001:3000"
     environment:
@@ -77,6 +78,9 @@ services:
       - SIDEKIQ_WEB_PASSWORD=${SIDEKIQ_WEB_PASSWORD}
       - AFS_BASE_URL=${AFS_BASE_URL}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - RAILS_ENV=development
+      - PASSED_RAILS_ENV=development
+      - DB_PORT=3306
     networks:
       - app_network
     depends_on:

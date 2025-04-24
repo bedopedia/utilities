@@ -1,9 +1,0 @@
-FROM grafana/k6:latest
-
-# Copy test scripts
-COPY ./load-tests /scripts
-
-WORKDIR /scripts
-
-# Use a simple sleep command to keep container running
-CMD ["sh", "-c", "sleep infinity"]
