@@ -1,0 +1,7 @@
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'skolera';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
+
+CREATE USER IF NOT EXISTS 'skolera'@'%' IDENTIFIED BY 'skolera';
+GRANT ALL PRIVILEGES ON skolera.* TO 'skolera'@'%';
+
+FLUSH PRIVILEGES;
