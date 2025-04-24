@@ -50,7 +50,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./legacy_app:/app
+      - ./legacy_app:/myapp
     environment:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
