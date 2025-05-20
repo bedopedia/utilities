@@ -2,4 +2,5 @@ mysql_volume/
 .env
 mydump.sql
 redis_data
-wkhtmltopdf-binary-0.12.6.8.gem
+pgdata
+odoo-data/
