@@ -66,8 +66,6 @@ services:
       - RAILS_ENV=development
       - PASSED_RAILS_ENV=development
       - DB_PORT=3306
-      - AIRBRAKE_PROJECT_ID=${AIRBRAKE_PROJECT_ID}
-      - AIRBRAKE_PROJECT_KEY=${AIRBRAKE_PROJECT_KEY}
 
   legacy_rails:
     build:
@@ -87,8 +85,6 @@ services:
       - RAILS_ENV=development
       - PASSED_RAILS_ENV=development
       - DB_PORT=3306
-      - AIRBRAKE_PROJECT_ID=${AIRBRAKE_PROJECT_ID}
-      - AIRBRAKE_PROJECT_KEY=${AIRBRAKE_PROJECT_KEY}
     networks:
       - app_network
     depends_on:
@@ -121,6 +117,19 @@ services:
       - db
       - redis
       - sidekiq
+
+  angular-frontend:
+    build:
+      context: ./skolera-angular
+    ports:
+      - "4200:80"
+    volumes:
+      - ./skolera-angular:/app
+      - /app/node_modules
+    networks:
+      - app_network
+    command: ["nginx", "-g", "daemon off;"]
+
   nginx:
     image: nginx:1.25
     ports:
@@ -130,6 +139,7 @@ services:
     depends_on:
       - legacy_rails
       - next_rails
+      - angular-frontend
     networks:
       - app_network
 

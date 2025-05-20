@@ -6,3 +6,7 @@
 	path = next_app
 	url = https://github.com/bedopedia/skolera_be
 	branch = local-dockerization
+[submodule "skolera-angular"]
+	path = skolera-angular
+	url = https://github.com/bedopedia/skolera-angular.git
+	branch = prod
